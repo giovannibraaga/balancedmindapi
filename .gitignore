@@ -35,4 +35,4 @@ build/
 # Ignore local application config
 application.yaml
 **/application.yaml
-resources/**
+**/resources/**
