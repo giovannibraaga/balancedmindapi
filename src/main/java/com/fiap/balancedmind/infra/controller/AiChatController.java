@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,10 +27,11 @@ public class AiChatController {
 
     @PostMapping("/chat")
     public ResponseEntity<AiChatResponseDTO> chat(
-            @Valid @RequestBody AiChatRequestDTO requestDTO) {
+            @Valid @RequestBody AiChatRequestDTO requestDTO,
+            Authentication authentication) {
         try {
-            AiChatResponseDTO responseDTO = aiChatService.chat(requestDTO);
-            return ResponseEntity.ok(responseDTO);
+            AiChatResponseDTO response = aiChatService.chat(requestDTO, authentication);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             log.warn("Validation Error {}", ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
