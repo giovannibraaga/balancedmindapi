@@ -32,6 +32,13 @@ public class UserService {
         return toDto(saved);
     }
 
+    public UserProfileResponseDTO getByFirebaseUid(String firebaseUid) {
+        User u = repo.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new IllegalArgumentException("User not found for uid: " + firebaseUid));
+
+        return toDto(u);
+    }
+
     private UserProfileResponseDTO toDto(User u) {
         return new UserProfileResponseDTO(
                 u.getUserId(),

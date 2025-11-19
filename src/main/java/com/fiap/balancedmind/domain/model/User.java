@@ -13,17 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "BM_USER") // se a tabela tiver outro nome, ajusta aqui
+@Table(name = "USERS", schema = "ADMIN")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bm_user_seq")
-    @SequenceGenerator(
-            name = "bm_user_seq",
-            sequenceName = "BM_USER_SEQ",
-            allocationSize = 1
-    )
     @Column(name = "USER_ID")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
     @Column(name = "FIREBASE_UID", nullable = false, unique = true)
@@ -42,5 +37,6 @@ public class User {
         this.firebaseUid = firebaseUid;
         this.username = username;
         this.email = email;
+        this.joinedAt = joinedAt;
     }
 }

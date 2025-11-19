@@ -7,14 +7,18 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Service
 public class AuthService {
 
@@ -34,6 +38,12 @@ public class AuthService {
     private RestClient restClient() {
         return RestClient.builder()
                 .baseUrl("https://identitytoolkit.googleapis.com")
+                .build();
+    }
+
+    private RestClient secureTokenClient() {
+        return RestClient.builder()
+                .baseUrl("https://securetoken.googleapis.com")
                 .build();
     }
 
@@ -104,6 +114,75 @@ public class AuthService {
         );
 
         return new LoginResult(user, res.idToken, res.refreshToken, res.expiresIn);
+    }
+
+    public RefreshResult refresh(String refreshToken) {
+        log.info("auth.refresh.start refreshToken={}", refreshToken != null ? "present" : "null");
+        String path = "/v1/token?key=" + firebaseApiKey;
+
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "refresh_token");
+        form.add("refresh_token", refreshToken);
+
+        log.info("auth.refresh.request path={}", path);
+
+        RefreshResponse res;
+        try {
+            res = secureTokenClient().post()
+                    .uri(path)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(form)
+                    .retrieve()
+                    .body(RefreshResponse.class);
+
+            log.info("auth.refresh.response received idToken={} refreshToken={} expiresIn={} userId={}",
+                    res != null && res.idToken != null ? "present" : "null",
+                    res != null && res.refreshToken != null ? "present" : "null",
+                    res != null ? res.expiresIn : "null",
+                    res != null ? res.userId : "null");
+        } catch (RestClientResponseException ex) {
+            log.warn("auth.refresh.firebase.rest.error status={} body={}",
+                    ex.getRawStatusCode(), ex.getResponseBodyAsString());
+            throw new IllegalArgumentException("Invalid refresh token");
+        } catch (Exception ex) {
+            log.warn("auth.refresh.firebase.rest.error msg={}", ex.getMessage());
+            throw new IllegalArgumentException("Refresh failed");
+        }
+
+        if (res == null || res.idToken == null) {
+            throw new IllegalArgumentException("Invalid refresh token");
+        }
+
+        try {
+            FirebaseToken decoded = firebaseAuth.verifyIdToken(res.idToken());
+            log.info("auth.refresh.verify uid={} email={}", decoded.getUid(), decoded.getEmail());
+        } catch (FirebaseAuthException e) {
+            log.warn("auth.refresh.verify.error msg={}", e.getMessage());
+            throw new IllegalArgumentException("Invalid token returned by provider");
+        }
+
+        log.info("auth.refresh.success");
+
+        return new RefreshResult(
+                res.idToken(),
+                res.refreshToken(),
+                res.expiresIn()
+        );
+    }
+
+    private record RefreshResponse(
+            @JsonProperty("id_token") String idToken,
+            @JsonProperty("refresh_token") String refreshToken,
+            @JsonProperty("expires_in") String expiresIn,
+            @JsonProperty("user_id") String userId
+    ) {
+    }
+
+    public record RefreshResult(
+            String idToken,
+            String refreshToken,
+            String expiresIn
+    ) {
     }
 
 
