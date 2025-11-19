@@ -1,0 +1,218 @@
+openapi: 3.1.0
+info:
+  title: BalancedMind API
+  description: API de autenticação e chat com IA (gateway para TheraAPI)
+  version: 1.0.0
+servers:
+  - url: https://api.seu-dominio.com
+    description: Ambiente de produção
+  - url: http://localhost:8080
+    description: Ambiente de desenvolvimento local
+paths:
+  /auth/signup:
+    post:
+      tags:
+        - Autenticação
+      summary: Cria um novo usuário
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: E-mail do usuário
+                password:
+                  type: string
+                  minLength: 6
+                  maxLength: 24
+                  description: Senha do usuário
+                username:
+                  type: string
+                  maxLength: 120
+                  description: Nome de exibição do usuário
+              required:
+                - email
+                - password
+                - username
+      responses:
+        '200':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+  /auth/login:
+    post:
+      tags:
+        - Autenticação
+      summary: Autentica um usuário e retorna tokens JWT
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                  maxLength: 24
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login efetuado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciais inválidas
+  /auth/refresh:
+    post:
+      tags:
+        - Autenticação
+      summary: Atualiza o token de acesso
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+              required:
+                - refreshToken
+      responses:
+        '200':
+          description: Token atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+        '401':
+          description: Refresh token inválido ou expirado
+  /ai/chat:
+    post:
+      tags:
+        - AI Chat
+      summary: Envia uma mensagem para o chat de IA (TheraAPI)
+      operationId: aiChat
+      parameters:
+        - name: Authorization
+          in: header
+          description: Token JWT de autenticação (Bearer token)
+          required: true
+          schema:
+            type: string
+          example: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjM4MDI5MzRmZTBlZWM0NmE1ZWQwMDA2ZDE0YTFiYWIwMWUzNDUwODMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoicmVuYXRvIGRpYXMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZ3MyZmlhcCIsImF1ZCI6ImdzMmZpYXAiLCJhdXRoX3RpbWUiOjE3NjM1MTkzNjYsInVzZXJfaWQiOiJreXhCY0g4SEFnUUljb0N0WDd4cTR1N1JQQmYxIiwic3ViIjoia3l4QmNIOEhBZ1FJY29DdFg3eHE0dTdSUEJmMSIsImlhdCI6MTc2MzUyMDAzNiwiZXhwIjoxNzYzNTIzNjM2LCJlbWFpbCI6InJlbmF0b0BiYWxhbmNlZG1pbmQuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInJlbmF0b0BiYWxhbmNlZG1pbmQuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.eL5Dwv1krKmAy_gIPGj5BzhzPqDWP8Fk_NzKoQzVOj_wSudpj_9YlH1hFVYHCWin41Ze1VF1ANiJzjWW9mveeeVCJY3X4m1pzYGXSApJqNTCXYbiZEou_2-fhAtu3i7_ASeirdhExlO_haPO81qoqZQPxDtotjmflB1PkPMSL2LmO0oVV7xKmitkUFCuFHkHUa2eHOIq_IbVXju_7IP31ZcYzYAzsE87zo84kGRt7m8cdm20ZcWA6xrX_AC_QlP5Wh_8dcY4BjouwqVEsFJhzm4EwfGpb2pdondlYdFgsKG01t-l8wdvgW7pUJVGvBYL05Eq07b1IRYLHrrCGPzc2A
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiChatRequest'
+      responses:
+        '200':
+          description: Resposta gerada pela IA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiChatResponse'
+        '400':
+          description: Erro de validação dos dados enviados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiChatResponse'
+        '500':
+          description: Erro interno ao processar a requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiChatResponse'
+components:
+  schemas:
+    UserProfileResponse:
+      type: object
+      description: Perfil público do usuário
+      properties:
+        userId:
+          type: integer
+        firebaseUid:
+          type: string
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserProfileResponse'
+        idToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: string
+      required:
+        - user
+        - idToken
+        - refreshToken
+        - expiresIn
+    TokenRefreshResponse:
+      type: object
+      properties:
+        idToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: string
+      required:
+        - idToken
+        - refreshToken
+        - expiresIn
+    AiChatRequest:
+      type: object
+      description: Payload para envio de mensagem ao chat de IA
+      properties:
+        message:
+          type: string
+          description: Mensagem do usuário para a IA
+        sessionId:
+          type: string
+          description: Identificador da sessão de chat, se aplicável
+      required:
+        - message
+    AiChatResponse:
+      type: object
+      description: Resposta do chat de IA
+      properties:
+        response:
+          type: string
+          description: Mensagem de resposta gerada pela IA
+        suggestedTechniques:
+          type: array
+          items:
+            type: string
+          description: Técnicas sugeridas pela IA, se aplicável
+      required:
+        - reply
