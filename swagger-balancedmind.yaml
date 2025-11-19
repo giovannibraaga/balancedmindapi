@@ -143,6 +143,110 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AiChatResponse'
+  /monitor:
+    post:
+      tags:
+        - User Monitoring
+      summary: Endpoint de monitoramento do usuario.
+      operationId: postMonitor
+      parameters:
+        - name: Authorization
+          in: header
+          description: Token JWT de autenticação (Bearer token)
+          required: true
+          schema:
+            type: string
+          example: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjM4MDI5MzRmZTBlZWM0NmE1ZWQwMDA2ZDE0YTFiYWIwMWUzNDUwODMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoicmVuYXRvIGRpYXMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZ3MyZmlhcCIsImF1ZCI6ImdzMmZpYXAiLCJhdXRoX3RpbWUiOjE3NjM1MTkzNjYsInVzZXJfaWQiOiJreXhCY0g4SEFnUUljb0N0WDd4cTR1N1JQQmYxIiwic3ViIjoia3l4QmNIOEhBZ1FJY29DdFg3eHE0dTdSUEJmMSIsImlhdCI6MTc2MzUyMDAzNiwiZXhwIjoxNzYzNTIzNjM2LCJlbWFpbCI6InJlbmF0b0BiYWxhbmNlZG1pbmQuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInJlbmF0b0BiYWxhbmNlZG1pbmQuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.eL5Dwv1krKmAy_gIPGj5BzhzPqDWP8Fk_NzKoQzVOj_wSudpj_9YlH1hFVYHCWin41Ze1VF1ANiJzjWW9mveeeVCJY3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                worktime: { type: integer }
+                restQuality: { type: integer }
+                emotionalState: { type: string }
+              required:
+                - worktime
+                - restQuality
+                - emotionalState
+            examples:
+              201-createdSuccesfully:
+                worktime: 12
+                restQuality: 8
+                emotionalState: "Excelente"
+      responses:
+        '200':
+          description: Monitor created / returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitorResponse'
+              examples:
+                monitor-success:
+                  value:
+                    userId: 8
+                    lastLog: null
+                    worktime: 1
+                    restQuality: 5
+                    emotionalState: "Otimo"
+    get:
+      tags:
+        - User Monitoring
+      summary: Endpoint de monitoramento do usuario.
+      operationId: getMonitor
+      parameters:
+        - name: Authorization
+          in: header
+          description: Token JWT de autenticação (Bearer token)
+          required: true
+          schema:
+            type: string
+          example: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjM4MDI5MzRmZTBlZWM0NmE1ZWQwMDA2ZDE0YTFiYWIwMWUzNDUwODMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoicmVuYXRvIGRpYXMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZ3MyZmlhcCIsImF1ZCI6ImdzMmZpYXAiLCJhdXRoX3RpbWUiOjE3NjM1MTkzNjYsInVzZXJfaWQiOiJreXhCY0g4SEFnUUljb0N0WDd4cTR1N1JQQmYxIiwic3ViIjoia3l4QmNIOEhBZ1FJY29DdFg3eHE0dTdSUEJmMSIsImlhdCI6MTc2MzUyMDAzNiwiZXhwIjoxNzYzNTIzNjM2LCJlbWFpbCI6InJlbmF0b0BiYWxhbmNlZG1pbmQuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInJlbmF0b0BiYWxhbmNlZG1pbmQuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.eL5Dwv1krKmAy_gIPGj5BzhzPqDWP8Fk_NzKoQzVOj_wSudpj_9YlH1hFVYHCWin41Ze1VF1ANiJzjWW9mveeeVCJY3
+      responses:
+        '200':
+          description: Lista de monitoramentos retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monitors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        userId:
+                          type: integer
+                        username:
+                          type: string
+                        lastLog:
+                          type: string
+                          format: date-time
+                        worktime:
+                          type: integer
+                        restQuality:
+                          type: integer
+                        emotionalState:
+                          type: string
+                      required:
+                        - userId
+                        - username
+                        - lastLog
+                        - worktime
+                        - restQuality
+                        - emotionalState
+              examples:
+                monitors-example:
+                  value:
+                    monitors:
+                      - userId: 8
+                        username: "Giovanni Bernardo"
+                        lastLog: "2025-11-19T13:36:49.425807Z"
+                        worktime: 1
+                        restQuality: 5
+                        emotionalState: "Otimo"
 components:
   schemas:
     UserProfileResponse:
@@ -218,3 +322,25 @@ components:
           description: Técnicas sugeridas pela IA, se aplicável
       required:
         - reply
+    MonitorResponse:
+      type: object
+      description: Monitoramento do usuário
+      properties:
+        userId:
+          type: integer
+        lastLog:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Último log (pode ser null)
+        worktime:
+          type: integer
+        restQuality:
+          type: integer
+        emotionalState:
+          type: string
+      required:
+        - userId
+        - worktime
+        - restQuality
+        - emotionalState
