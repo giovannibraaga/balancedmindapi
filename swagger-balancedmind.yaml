@@ -197,8 +197,10 @@ components:
         message:
           type: string
           description: Mensagem do usuário para a IA
-        sessionId:
-          type: string
+        moodRating:
+          type: integer
+          min: 1
+          max: 5
           description: Identificador da sessão de chat, se aplicável
       required:
         - message
