@@ -36,3 +36,5 @@ build/
 application.yaml
 **/application.yaml
 **/resources/**
+
+Dockerfile

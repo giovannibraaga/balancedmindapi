@@ -28,7 +28,6 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Auth endpoints liberados (signup/login)
                         .requestMatchers(
                                 "/auth/**",
                                 "/swagger-ui.html",
