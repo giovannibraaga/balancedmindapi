@@ -1,163 +1,241 @@
 # BalancedMind API
 
-API de autenticação de usuários e chat terapêutico com IA (gateway para TheraAPI), construída em Spring Boot.
+Spring Boot API for user authentication and an AI-powered therapeutic chat experience. The API acts as a secure gateway to the external TheraAPI service.
 
-## Índice
-- [Arquitetura](#arquitetura)
-- [Tecnologias](#tecnologias)
-- [Execução do projeto](#execução-do-projeto)
-- [Configuração de ambiente](#configuração-de-ambiente)
-- [Autenticação e segurança](#autenticação-e-segurança)
-- [Documentação da API (Swagger/OpenAPI)](#documentação-da-api-swaggeropenapi)
+> **Disclaimer:** BalancedMind is an educational and portfolio project. It does not provide medical diagnosis, emergency support or professional mental-health care.
+
+## Contents
+
+- [Architecture](#architecture)
+- [Technologies](#technologies)
+- [Running the project](#running-the-project)
+- [Environment configuration](#environment-configuration)
+- [Authentication and security](#authentication-and-security)
+- [API documentation](#api-documentation)
 - [Endpoints](#endpoints)
-  - [/auth](#auth)
-  - [/ai](#ai)
-- [Estrutura de pastas](#estrutura-de-pastas)
+- [Project structure](#project-structure)
 
----
+## Architecture
 
-## Arquitetura
+BalancedMind is organized as a layered Spring Boot application:
 
-- **Backend:** Spring Boot (Java)
-- **Camadas principais:**
-  - `application`: DTOs, services e mapeamentos
-  - `domain`: modelos de domínio e repositórios
-  - `infra`: controllers REST, clients externos, segurança e exceções
-- **Banco de dados:** (configuração definida em `application.yaml`)
-- **Integração externa:** TheraAPI (chat terapêutico com IA) via `TheraAPIClient`.
+- **Application layer:** DTOs, services and mappings
+- **Domain layer:** domain models and repositories
+- **Infrastructure layer:** REST controllers, external API clients, security and exception handling
+- **Persistence:** database configuration is defined in `application.yaml`
+- **External integration:** TheraAPI, accessed through the dedicated `TheraAPIClient`
 
-## Tecnologias
+The API exposes authentication endpoints and a protected AI chat endpoint. The backend validates the user identity before forwarding chat requests to the external AI service.
 
-- Java 17+ (recomendado)
+## Technologies
+
+- Java 17+
 - Spring Boot
 - Spring Web
-- Spring Security (JWT / Firebase)
-- Jakarta Validation (Bean Validation)
+- Spring Security
+- Firebase Authentication and JWT validation
+- Jakarta Bean Validation
 - Maven
+- OpenAPI/Swagger
 
-## Execução do projeto
+## Running the project
 
-### Requisitos
-- JDK 17+ instalado
-- Maven 3.8+ instalado
+### Requirements
 
-### Rodando localmente
+- JDK 17 or later
+- Maven 3.8 or later
+- Firebase project and Admin SDK credentials
+- TheraAPI access credentials
 
-Na raiz do projeto:
+### Run locally
+
+From the project root:
 
 ```bash
 mvn spring-boot:run
 ```
 
-O backend subirá por padrão em:
+The application starts by default at:
 
-- `http://localhost:8080`
+```text
+http://localhost:8080
+```
 
-O servidor está aberto para chamadas em:
-- `https://balancedmind.lat/api/v1/**`
+The API base path is:
 
-As configurações de porta e perfis estão em `src/main/resources/application.yaml`.
+```text
+http://localhost:8080/api/v1
+```
 
-## Configuração de ambiente
+When deployed, the API is available at:
 
-Alguns pontos importantes de configuração:
+```text
+https://balancedmind.lat/api/v1
+```
 
-- **Firebase**
-  - Arquivo de credenciais: `src/main/resources/gs2fiap-firebase-adminsdk-fbsvc-594aeebb70.json`
-  - Configurações adicionais em `FirebaseConfig.java` e `SecurityConfig.java`.
-- **TheraAPI**
-  - Endpoint e credenciais configurados em `WebClientConfig.java` e/ou `application.yaml`.
+Port and profile settings are defined in `src/main/resources/application.yaml`.
 
-Adapte esses arquivos para os ambientes de **desenvolvimento**, **homologação** e **produção** antes de subir a aplicação.
+## Environment configuration
 
-## Autenticação e segurança
+Configure the following integrations for each environment:
 
-- Autenticação baseada em **Firebase** com tokens **JWT**.
-- O fluxo típico é:
-  1. `POST /auth/signup` – cria o usuário na base local.
-  2. `POST /auth/login` – autentica o usuário e retorna `idToken` e `refreshToken`.
-  3. `POST /auth/refresh` – obtém um novo `idToken` a partir do `refreshToken`.
-- Endpoints protegidos (como `/ai/chat`) exigem header:
+### Firebase
 
-  `Authorization: Bearer <idToken>`
+BalancedMind uses Firebase for user authentication and JWT-based identity validation. Firebase Admin SDK credentials must be supplied through a secure environment-specific mechanism, such as environment variables, a mounted secret or a secret manager.
 
-## Documentação da API (Swagger/OpenAPI)
+Do not commit Firebase service-account JSON files, private keys or other credentials to the repository.
 
-A especificação OpenAPI está no arquivo:
+Relevant application components include:
 
-- `swagger-balancedmind.yaml`
+- `FirebaseConfig.java`
+- `SecurityConfig.java`
 
-Você pode importá-lo em ferramentas como:
+### TheraAPI
+
+Configure the TheraAPI endpoint and credentials through the application configuration and the external client configuration used by `TheraAPIClient`.
+
+Use separate settings for development, staging and production. Never publish API keys or tokens in source code, README files or screenshots.
+
+## Authentication and security
+
+Authentication is based on Firebase and JWTs.
+
+Typical authentication flow:
+
+1. `POST /api/v1/auth/signup` creates a user in the local application database.
+2. `POST /api/v1/auth/login` authenticates the user and returns an `idToken` and `refreshToken`.
+3. `POST /api/v1/auth/refresh` issues a new access token from a valid refresh token.
+
+Protected endpoints, including `/api/v1/ai/chat`, require the following header:
+
+```http
+Authorization: Bearer <idToken>
+```
+
+## API documentation
+
+The OpenAPI specification is available in:
+
+```text
+swagger-balancedmind.yaml
+```
+
+You can import the specification into:
 
 - [Swagger UI](https://swagger.io/tools/swagger-ui/)
 - [Postman](https://www.postman.com/)
 - [Insomnia](https://insomnia.rest/)
 
-Para usar com Swagger UI localmente, basta apontar a interface para o arquivo `swagger-balancedmind.yaml`.
+To use Swagger UI locally, load `swagger-balancedmind.yaml` into the interface.
 
 ## Endpoints
 
-### /auth
+### Authentication
 
-**Base URL:** `/auth`
+#### `POST /api/v1/auth/signup`
 
-#### POST /auth/signup
-Cria um novo usuário.
+Creates a new user.
 
-- **Request body (JSON):**
-  - `email` (string, email, obrigatório)
-  - `password` (string, 6–24, obrigatório)
-  - `username` (string, até 120, obrigatório)
+Request body:
 
-- **Response 200:**
-  - `UserProfileResponse` com dados públicos do usuário.
+```json
+{
+  "email": "user@example.com",
+  "password": "secure-password",
+  "username": "username"
+}
+```
 
-#### POST /auth/login
-Autentica o usuário e retorna tokens JWT.
+Validation rules:
 
-- **Request body (JSON):**
-  - `email` (string, email, obrigatório)
-  - `password` (string, 6–24, obrigatório)
+- `email`: required and must be a valid email address
+- `password`: required, between 6 and 24 characters
+- `username`: required, up to 120 characters
 
-- **Response 200:**
-  - `LoginResponse` contendo:
-    - `user` (perfil do usuário)
-    - `idToken`
-    - `refreshToken`
-    - `expiresIn`
+Returns a `UserProfileResponse` with public user information.
 
-#### POST /auth/refresh
-Atualiza o token de acesso a partir de um `refreshToken` válido.
+#### `POST /api/v1/auth/login`
 
-- **Request body (JSON):**
-  - `refreshToken` (string, obrigatório)
+Authenticates a user and returns authentication tokens.
 
-- **Response 200:**
-  - `TokenRefreshResponse` contendo:
-    - `idToken`
-    - `refreshToken`
-    - `expiresIn`
+Request body:
 
-### /ai
+```json
+{
+  "email": "user@example.com",
+  "password": "secure-password"
+}
+```
 
-**Base URL:** `/ai`
+Returns a `LoginResponse` containing:
 
-#### POST /ai/chat
-Envia uma mensagem para o chat de IA (TheraAPI) e retorna uma resposta terapêutica.
+- `user`
+- `idToken`
+- `refreshToken`
+- `expiresIn`
 
-- **Headers:**
-  - `Authorization: Bearer <idToken>` (obrigatório)
+#### `POST /api/v1/auth/refresh`
 
-- **Request body (JSON):** `AiChatRequest`
-  - `message` (string, obrigatório) – mensagem do usuário para a IA.
-  - `moodRating` (integer, opcional) – identificador da sessão de chat.
+Refreshes the access token using a valid refresh token.
 
-- **Responses:**
-  - `200` – `AiChatResponse`
-    - `response` (string) – resposta da IA.
-    - `suggestedTechniques` (array de string, opcional) – técnicas sugeridas.
-  - `400` – erro de validação (dados inválidos).
-  - `500` – erro interno ao processar a requisição.
+Request body:
 
----
+```json
+{
+  "refreshToken": "refresh-token"
+}
+```
 
+Returns a `TokenRefreshResponse` containing:
+
+- `idToken`
+- `refreshToken`
+- `expiresIn`
+
+### AI chat
+
+#### `POST /api/v1/ai/chat`
+
+Sends a message to the therapeutic AI chat through TheraAPI.
+
+Required header:
+
+```http
+Authorization: Bearer <idToken>
+```
+
+Request body:
+
+```json
+{
+  "message": "I have been feeling stressed at work.",
+  "moodRating": 3
+}
+```
+
+Fields:
+
+- `message`: required user message
+- `moodRating`: optional integer associated with the chat session
+
+Responses:
+
+- `200 OK`: `AiChatResponse`
+  - `response`: AI-generated response
+  - `suggestedTechniques`: optional list of suggested techniques
+- `400 Bad Request`: invalid request data
+- `500 Internal Server Error`: error while processing the request
+
+## Project structure
+
+```text
+src/main/java/
+└── ...
+    ├── application/   # DTOs, services and mappings
+    ├── domain/         # Domain models and repositories
+    └── infra/          # REST, external clients, security and exceptions
+```
+
+## Project status
+
+BalancedMind is maintained as a portfolio project demonstrating Spring Boot API design, JWT-based authentication, external AI service integration and layered backend architecture.
